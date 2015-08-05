@@ -26,10 +26,19 @@ http://www.facebook.com/limouren
 
 * tl;dr
 
+  $ ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
   $ brew install go
   $ mkdir ~/go
-  $ EXPORT GOPATH=~/go
-  $ EXPORT PATH='$PATH;~/go/bin'
+  $ # add in .profile / .zsh_profile
+  $ export GOPATH=~/go
+  $ export PATH=$PATH:~/go/bin
+
+Open a new terminal:
+
+  $ which go
+  /usr/local/bin/go
+  $ go version
+  go version go1.4.2 darwin/amd64
 
 * Okay we can write some programs
 
@@ -85,6 +94,12 @@ Zero value of builtin type:
   if cond {
     // cond is true
   } else {
+    // cond is false
+  }
+
+  if cond1 {
+    // cond is true
+  } else if cond2 {
     // cond is false
   }
 
