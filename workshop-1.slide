@@ -1,0 +1,324 @@
+Workshop: Introduction To Go
+#1: Go Basic!
+15:04 24 Jul 2015
+Tags: workshop
+
+Kenji Pa
+Cat Developer, Oursky
+limouren@gmail.com
+http://www.facebook.com/limouren
+@limouren
+
+* Why Go?
+
+- Compiled language
+- _Feels_ like scripting language
+  a, b := aComplex.Components()	// YEAH!
+- Explicit, tracable code.
+- Simple language. Don't try to do everything. You know exactly what can and _cannot_ be done.
+- Built-in concurrency
+- Great toolings, like `go`get`, `go`install`, `got`fmt`, `golint`, etc...
+
+* Okay, I'm in. How to get started?
+
+- Install Go binary: [[http://golang.org/doc/install]]
+- Set up GOPATH: [[http://golang.org/doc/code.html]]
+
+* tl;dr
+
+  $ brew install go
+  $ mkdir ~/go
+  $ EXPORT GOPATH=~/go
+  $ EXPORT PATH='$PATH;~/go/bin'
+
+* Okay we can write some programs
+
+* YOU KNOW THE DEAL
+
+* OUR FIRST GO PROGRAM
+
+* Hello World
+
+.play helloworld.go
+
+* HELLO WORLD IS BORING
+
+* COME ON, JAMES
+
+.code comeonjames.go
+
+* Zero value
+
+- When you declare a variable like this:
+  
+  var aVariable Type
+
+`aVariable` will be assigned a "zero value".
+
+Zero value of builtin type:
+
+- Numbers: 0
+- string: ""
+- bool: `false`
+- struct: zero value of its members
+- Pointer: nil
+
+* Functions
+
+.play func.go /START OMIT/,/END OMIT/
+
+* Variable Declaration
+
+- You know those basics
+  var (
+  	boolValue bool = true
+  	stringValue string = "string"
+  	intValue int = 1 // int8, int16, int32, int64, uint, uint8 and so on...
+  	floatValue float32 = 1.0 // float64
+  	complexValue complex32 = builtin.complex(0, 1)
+  )
+
+* Flow Control
+
+* Flow Control: if
+
+  if cond {
+    // cond is true
+  } else {
+    // cond is false
+  }
+
+* Flow Control: Loop
+
+Of course!
+
+.play for.go
+
+* Flow Control: While
+
+Hmm...?
+
+.play for-while.go
+
+* Flow Control: For'ever
+
+Frankly, you only need `for`
+
+  for {
+    // runs forever...
+  }
+
+*`for`*rocks!*
+
+* Flow Control: Switch
+
+  var name string
+  fmt.Scanf("%s", &name)
+
+  // implicit break in each cases
+  switch name {
+  case "Edwin":
+    fmt.Println("handsome!")
+  case "Carmen":
+    fmt.Println("pretty!")
+  case "Chima", "Faseng":
+    fmt.Println("cute!")
+  default:
+    fmt.Println("boring!")
+  }
+
+* Data Types
+
+** Struct
+
+- Delcare
+  type Location struct {
+  	lat, lon float64
+  }
+- Instantiate
+  loc := Location{lat: 1, lon: 1}
+
+* More Data Types
+
+* Array
+
+We have
+
+  var integers [8]int
+
+Declare with initializer:
+
+  integers = [8]int{0, 1, 2, 3, 4, 5, 6, 7}
+
+But fixed-length array isn't very helpful. Of course... Go got you covered.
+
+* Slice
+
+Dynamic array is called "slice". To Declare:
+
+  integers []int
+
+Initialize, like array:
+
+  integers := []int{0, 1, 2, 3, 4, 5, 6, 7}
+
+Accessing member:
+
+  integers[5] == 5
+
+* Slice (cont.)
+
+"Slice" a slice:
+
+  // integers[1:4] == []int{1, 2, 3}
+
+Getting its length:
+
+  len(integers) == 8
+
+Slice that cannot grow is useless:
+
+  integers = append(integers, 9, 10)
+
+C's guys will cry out if they cannot specify the initial length and capacity of slice:
+
+  len := 9000
+  cap := 9001
+  integers = make([]int, len, cap)
+  // it's Over 9000!
+
+* Map
+
+So the type looks like:
+
+  map[KeyType]ValueType
+
+To declare it:
+
+  var m map[string]int
+
+To initialize it:
+
+  m1 := make(map[string]int)
+  m2 := map[string]int{}
+  // the two statements are functionally equivalent
+
+Initialize with some item:
+
+  wordCount := map[string]int{
+    "word": 1,
+    "map": 7,
+  }
+
+* Map (cont.)
+
+Set item:
+
+  wordCount["vocabulary"] = 6
+
+Delete item:
+
+  delete(wordCount, "vocabulary")
+
+Access items:
+
+  i := wordCount["word"]
+  // i == 7
+
+  j := wordCount["not-exist"]
+  // access a key that doesn't exist return the zero value of ValueType
+  // in this case j == 0
+
+  k, ok := wordCount["not-exist"]
+  // use the ok pattern to check key existence
+  // ok == false
+
+* Man it's boring
+
+.image https://scontent.cdninstagram.com/hphotos-xfa1/t51.2885-15/s320x320/e15/11325191_935950856427283_121489414_n.jpg
+
+*Give*me*classes*and*inheritance*and*polymorphism!*
+
+* Go doesn't have Class
+
+.image http://img3.wikia.nocookie.net/__cb20120510103940/invasorzim/es/images/8/88/Mother-of-god-template.jpg
+
+* Method
+
+There are no classes in Go, but you can write methods on `struct`:
+
+.play method.go
+
+* Method (cont.)
+
+  func (t Type) Method()
+
+`t` is called _receiver_, which refers to the struct this method is acting. Instead of `Type`, method can also be declared on a pointer `*Type`:
+
+  func (tp *Type) Method()
+
+The difference between `pointer`receiver` and non-pointer receiver is that pointer receiver can modify the receiver: `tp` is pointing to the actual struct being called on.
+
+* Method (cont.)
+
+.play method-receiver.go
+
+* Q: Isn't it Class?
+
+*No*.
+
+You cannot _subclass_ a struct. Struct is struct, a collection of data and nothing more.
+
+Reuse code by composition. :P
+
+* Q: So Go can't write my favourite `Shape` examples? Go is useless for me!
+
+Yes and No. Stay tuned.
+
+* Interface
+
+- Interface is a type that declares a set of methods.
+- It can be used to hold any value that implemented all methods defined in an interface.
+- Much like Java's `interface`
+- Declare a interface:
+
+  type Interface interface {
+    Method(t1 Type1, t2 Type2) Type3
+  }
+
+* Interface (Cont.)
+
+.play interface.go
+
+* Interface (Cont.)
+
+Some observations:
+
+- `Cat` and `Dog` do not need to explicitly state that they implement `Animal`. As long as they has a method called Speak(), they satified the requirement being a `Animal`.
+- Go's interface-only approach emphasizes on the _behaviour_ of an object. It's about _How_this_object_behaves_ instead of _What_is_this_object_
+- `Cat` is more adorable than `Dog`.
+
+* Interface: Exercise
+
+Implement the classic _Shape_ example in Go:
+
+.play interface-shape.go
+
+* Interface (Cont.)
+
+Some builtin interfaces you might want to look into
+
+- `fmt.Stringer`: makes your own type printable
+- `io.Reader` and `io.Writer`: streaming io
+- `http.Handler`: self-descriptive. Used to write http handler.
+
+* Concurrency
+
+Go's concurrency is built on two components:
+
+- goroutine
+- channel
+
+* Goroutine
+
+Goroutine is a function that can be run concurrently
