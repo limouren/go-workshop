@@ -8,15 +8,11 @@ type Animal interface {
 
 type Dog struct{}
 
-func (dog Dog) Speak() {
-	fmt.Println("Woooooooooooooooooooooof~")
-}
+func (dog Dog) Speak() { fmt.Println("Woooooooooooooooooooooof~") }
 
 type Cat struct{}
 
-func (cat Cat) Speak() {
-	fmt.Println("Meow~")
-}
+func (cat Cat) Speak() { fmt.Println("Meow~") }
 
 func main() {
 	var animal Animal
