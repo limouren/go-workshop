@@ -19,26 +19,28 @@ http://www.facebook.com/limouren
 - Built-in concurrency
 - Great toolings, like `go`get`, `go`install`, `got`fmt`, `golint`, etc...
 
-* Okay, I'm in. How to get started?
+* Set up your environment
 
-- Install Go binary: [[http://golang.org/doc/install]]
-- Set up GOPATH: [[http://golang.org/doc/code.html]]
+* https://github.com/limouren/go-workshop
 
-* tl;dr
+* Verify installation
 
-  $ ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
-  $ brew install go
-  $ mkdir ~/go
-  $ # add in .profile / .zsh_profile
-  $ export GOPATH=~/go
-  $ export PATH=$PATH:~/go/bin
-
-Open a new terminal:
+Open a new terminal (or shell or cmd or git bash):
 
   $ which go
   /usr/local/bin/go
   $ go version
   go version go1.4.2 darwin/amd64
+
+* Verify installation (Cont.)
+
+Now we have go running, how about running this slide right in your browser too?
+
+  $ go get golang.org/x/tools/cmd/present
+  $ git clone git@github.com:limouren/go-workshop.git
+  $ cd go-workshop
+  $ present
+  2015/08/07 00:30:21 Open your web browser and visit http://127.0.0.1:3999
 
 * Okay we can write some programs
 
