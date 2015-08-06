@@ -9,15 +9,38 @@ limouren@gmail.com
 http://www.facebook.com/limouren
 @limouren
 
-* Why Go?
+* What is Go?
 
-- Compiled language
-- _Feels_ like scripting language
+Go is compiled language created by Google, <del>mainly driven by hatred towards C++</del>. As a design most of C++ shorcomings are absent / remedied:
+
+- Simple language, no inheritance, no generics
+- Concise and readable code, result of the above point
   a, b := aComplex.Components()	// YEAH!
-- Explicit, tracable code.
-- Simple language. Don't try to do everything. You know exactly what can and _cannot_ be done.
+- Compiles _fast_
 - Built-in concurrency
-- Great toolings, like `go`get`, `go`install`, `got`fmt`, `golint`, etc...
+
+* What is Go? (Cont.)
+
+Go also aims at building system that is written by many software engineers. Solutions that help software maintenance and distribution is also built-in.
+
+- One and only one coding style
+- Code document system
+- Build system, no `make`
+- Built-in testing tools
+- Great tools! ^-- All of these
+
+* What is Go? (Cont.)
+
+Go also aims at building system that is written by many software engineers. Solutions that help software maintenance and distribution is also built-in.
+
+- One and only one coding style: `go`fmt`
+- Code document system: `godoc`
+- Build system, no `make`: `go`build`
+- Built-in testing tools `go`test`
+- Great tools!
+- There are more: `go`vet`, `gorename`, `go`generate`
+
+Now let's get started.
 
 * Set up your environment
 
@@ -42,9 +65,28 @@ Now we have go running, how about running this slide right in your browser too?
   $ present
   2015/08/07 00:30:21 Open your web browser and visit http://127.0.0.1:3999
 
-* Okay we can write some programs
+* Congratulation!
 
-* YOU KNOW THE DEAL
+* Final step: Choice of editor
+
+Choose an text editor of writing Go.
+
+If you cannot think of one immediately, use sublime text:
+- [[http://www.sublimetext.com/3]]
+
+* Final step: Run `go fmt` on file save
+
+Sublime text:
+
+- Install `Package`Control`: [[https://packagecontrol.io/installation#Simple]]
+- Install `GoSublime`: [[https://github.com/DisposaBoy/GoSublime#installation]]
+
+Other editors:
+
+- vim: [[https://github.com/fatih/vim-go]]
+- atom: [[https://github.com/joefitzgerald/go-plus]]
+
+* Finally we can write some programs now
 
 * OUR FIRST GO PROGRAM
 
@@ -52,42 +94,89 @@ Now we have go running, how about running this slide right in your browser too?
 
 .play helloworld.go
 
-* HELLO WORLD IS BORING
+* Package
+
+  import "fmt"
+
+Let's look at the index of its documentation: [[https://golang.org/pkg/fmt/#pkg-index]]
+
+Could you see the patterns of variable and function namings?
+
+* Hello world is boring. Let's write another program
 
 * COME ON, JAMES
 
 .code comeonjames.go
 
+* Variable Declaration
+
+Basic syntax:
+
+  var variableName Type
+
+Delcared a variable named _variableName_ with type *Type*
+
+* What are the Type?
+
+`bool`
+`int`, `uint`, `int8`, `int16`, `int32`, `int64`, and so on
+`float32`, `float64`
+`string`
+
+There are more, but these are enough for now.
+
+* Vars Decl
+
+Consider this piece of code:
+
+  var (
+    ok bool
+    i int
+    love string
+  )
+
+  ok = true
+  i = 1
+  love = "true"
+
+* Vars Decl (Cont.)
+
+Write it shorter with _initializer_:
+
+  var (
+    ok bool = true
+    i int = 1
+    love string = "true"
+  )
+
+* Vars Decl (Cont.)
+
+Write it even shorter with _type_inference_:
+
+  ok := true
+  i := 1
+  love := "true"
+
 * Zero value
 
-- When you declare a variable like this:
+When you declare a variable like this:
   
   var aVariable Type
 
-`aVariable` will be assigned a "zero value".
+Without assigning any value, `aVariable` is ready-to-use and by default
+assigned a "zero-type"
 
 Zero value of builtin type:
 
+- bool: `false`
 - Numbers: 0
 - string: ""
-- bool: `false`
-- struct: zero value of its members
-- Pointer: nil
+
+Common sense.
 
 * Functions
 
 .play func.go /START OMIT/,/END OMIT/
-
-* Variable Declaration
-
-- You know those basics
-  var (
-  	boolValue bool = true
-  	stringValue string = "string"
-  	intValue int = 1 // int8, int16, int32, int64, uint, uint8 and so on...
-  	floatValue float32 = 1.0 // float64
-  	complexValue complex32 = builtin.complex(0, 1)
-  )
 
 * Flow Control
 
@@ -144,6 +233,8 @@ Frankly, you only need `for`
     fmt.Println("boring!")
   }
 
+#TODO: More examples
+
 * Data Types
 
 ** Struct
@@ -165,7 +256,7 @@ We have
 
 Declare with initializer:
 
-  integers = [8]int{0, 1, 2, 3, 4, 5, 6, 7}
+  integers := [8]int{0, 1, 2, 3, 4, 5, 6, 7}
 
 But fixed-length array isn't very helpful. Of course... Go got you covered.
 
@@ -203,6 +294,19 @@ C's guys will cry out if they cannot specify the initial length and capacity of 
   cap := 9001
   integers = make([]int, len, cap)
   // it's Over 9000!
+
+* Slice (Cont.)
+
+Iterate over an slice:
+
+  integers := []int{3, 2, 1, 0}
+  for index, number := range intergers {
+    fmt.Printf("%d: %d\n", index, number)
+  }
+  // 0: 3
+  // 1: 2
+  // 2: 1
+  // 3: 0
 
 * Map
 
@@ -246,9 +350,17 @@ Access items:
   // access a key that doesn't exist return the zero value of ValueType
   // in this case j == 0
 
-  k, ok := wordCount["not-exist"]
-  // use the ok pattern to check key existence
+  _, ok := wordCount["not-exist"]
+  // use ok pattern to check key existence
   // ok == false
+
+* Map (cont.)
+
+Iterating over a map:
+
+  for key, value := wordCount {
+    fmt.Printf("The word '%s' occurred %d times\n")
+  }
 
 * Man it's boring
 
@@ -329,13 +441,19 @@ Some builtin interfaces you might want to look into
 - `io.Reader` and `io.Writer`: streaming io
 - `http.Handler`: self-descriptive. Used to write http handler.
 
-* Concurrency
+* Thanks :D
 
-Go's concurrency is built on two components:
+* Next Workshop: Concurrency
+
+Go's concurrency model is built on two concepts:
 
 - goroutine
 - channel
 
-* Goroutine
+We will look and play with them. If time allows we might be layouting
+the skeleton of the chat server too.
 
-Goroutine is a function that can be run concurrently
+* Additional resources
+
+- Go Tour: [[https://tour.golang.org/]]
+- Effective Go: [[https://golang.org/doc/effective_go.html]]
