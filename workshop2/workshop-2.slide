@@ -1,0 +1,220 @@
+Workshop: Introduction To Go
+#1: Concurrency
+15:04 24 Jul 2015
+Tags: workshop
+
+Kenji Pa
+Cat Developer, Oursky
+limouren@gmail.com
+http://www.facebook.com/limouren
+@limouren
+
+* Goroutine (finally!)
+
+* Goroutine
+
+We will start with this simple program:
+
+.play simple.go
+
+* Goroutine (Cont.)
+
+When main returns, the whole program halts.
+
+Let's wait a little bit to see what's happening:
+
+.play simple-goroutine.go /START OMIT/,/END OMIT/
+
+* // TODO: Put thread of execution slide here
+
+* So what is Goroutine?
+
+Goroutine is a function running independently of other Goroutine and main function.
+
+Goroutine is very cheap and have very little setup and shutdown cost. Free feel to spawn a new one when you need it. (China company Qihoo 360 runs million of goroutines on *single* machine[0])
+
+Goroutine is not thread. One thread can run own multiple Goroutines. Go runtime multiplex goroutines on threads so you don't even have to touch thread while coding.
+
+*0: [[https://blog.golang.org/qihoo]]
+
+* Working forever is cruel
+
+* Specify a load
+
+.play goroutine-load.go
+
+* Goroutine*s*
+
+.play goroutine-multi.go
+
+* Goroutine (Cont.)
+
+Just having multiple goroutines running in background is pretty boring...
+
+Goroutine is useless if you cannot talk to it.
+
+Here comes _channels_.
+
+* Channel
+
+The mean of communication between Goroutine.
+
+  ch := make(chan int)
+
+Use the left-arrow operator to send a value through channel. It blocks until value is received.
+
+  ch <- 1
+
+Receive from channel using right arrow. It blocks until we received a value.
+
+  i := <-ch
+  // i == 1
+
+* How to use channel
+
+Let's say, in the previous working example, we want the main function to be notified when work returns. Let's write it:
+
+.play goroutine-load.go /START OMIT/,/END OMIT/
+
+* How to use channel (Cont.)
+
+Channel is first-class value which can be passed around. Here is another version that actually modifies the signature of work:
+
+.play goroutine-load.go /START OMIT/,/END OMIT/
+
+* Generator
+
+Let's re-think the work function. It pretends to do some work, and prints lines on the console.
+
+If we model those lines as result of work, then the work function should _generate_ those strings. And caller can decide what to do with it.
+
+We will modify `work` to return a channel:
+
+  func work(name string, workload int) chan string
+
+This pattern is called generator. (Python guys: YAHOO!)
+
+* Generator (Cont.)
+
+Now instead of launching goroutine in main, we launch it in `work` instead.
+
+.play generator.go /START OMIT/,/END OMIT/
+
+* Generator (Cont.)
+
+We can even remove the `workload` parameter from `work` as `work` now only works when we ask it to work.
+
+.play generator-noworkload.go /START OMIT/,/END OMIT/
+
+* Geneartor (Cont.)
+
+We can also use the `range` operator on a channel to extract its value. Here is basically a rewrite of our first `work` example.
+
+.play channel-range.go /START OMIT/,/END OMIT/
+
+* Exercise #1: Fan in
+
+Let's consider a `workSlowly` function which "works" every 3 seconds:
+
+	func work(name string) chan string {
+		ch := make(chan string)
+	
+		go func() {
+			for i := 0; ; i++ {
+				ch <- fmt.Sprint(name, i)
+				time.Sleep(3 * time.Second)
+			}
+		}()
+	
+		return ch
+	}
+
+* Exercise #1: Fan in (Cont.)
+
+If we intend to receive 10 works from fast worker (Edwin) and slow worker (Kenji) sequentially like this:
+
+  edwin := work("edwin")
+  kenji := workSlowly("kenji")
+
+  for i := 0; i < 5; i++ {
+  	fmt.Println(<-edwin)
+  	fmt.Println(<-kenji)
+  }
+
+It would take more time than needed since Edwin has to wait for Kenji turn before next work.
+
+* Exercise #1: Fan in (Cont.)
+
+Now, implement a `fanIn` function that takes two `chan`string` and return a channel, which would consumes and returns a work whenever one of the two workers is ready to deliver:
+
+  anyWork := fanIn(work("edwin"), workSlowly("kenji"))
+  for i := 0; i < 10; i++ {
+  	fmt.Println(<-anyWork)
+  }
+
+Base code is provided at _exec-fanin.go_
+
+* Select
+
+Select is flow control (?) & synchronization structure of channels.
+
+It is like `switch`, but works on channels, instead of value.
+
+Select checks every channel in case to see if they are ready, and blocks until one of them is ready.
+
+If a default clause exists, select doesn't block and executes the default block.
+
+  select {
+    case v1 := ch1:
+      fmt.Printf("received %v from ch1")
+    case ch2 <- 9001:
+      fmt.Printf("sent 9001 to ch2")
+    default:
+      fmt.Print("no channel is ready")
+  }
+
+* Select: Fan-in
+
+Let's re-visit the fan-in function:
+
+	func fanIn(ch1, ch2 chan string) chan string {
+		ch := make(chan string)
+
+		go func() {
+			for {
+				ch <- <-ch1
+			}
+		}()
+		go func() {
+			for {
+				ch <- <-ch2
+			}
+		}()
+
+		return ch
+	}
+
+We can rewrite it using select and save an goroutine. Try it yourself!
+
+* Select: Fan-in (Ans.)
+
+	func fanIn(ch1, ch2 chan string) chan string {
+		ch := make(chan string)
+
+		go func() {
+			for {
+				select {
+				case v1 := <-ch1:
+					ch <- v1
+				case v2 := <-ch2:
+					ch <- v2
+				}
+			}
+		}()
+
+		return ch
+	}
+
+* Select: Time-up
+
+.play timeup.go /START OMIT/,/END OMIT/
