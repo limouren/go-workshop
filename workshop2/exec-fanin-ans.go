@@ -12,12 +12,13 @@ func fanIn(ch1, ch2 chan string) chan string {
 
 	go func() {
 		for {
-			select {
-			case v1 := <-ch1:
-				ch <- v1
-			case v2 := <-ch2:
-				ch <- v2
-			}
+			ch <- <-ch1
+		}
+	}()
+
+	go func() {
+		for {
+			ch <- <-ch2
 		}
 	}()
 

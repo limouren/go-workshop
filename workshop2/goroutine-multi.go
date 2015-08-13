@@ -14,6 +14,7 @@ func work(name string, workload int) {
 
 func main() {
 	go work("boring", 5)
+	go work("edwin", 100)
 
 	fmt.Println("Going to sleep...")
 	time.Sleep(2 * time.Second)

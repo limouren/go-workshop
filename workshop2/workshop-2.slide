@@ -1,6 +1,6 @@
 Workshop: Introduction To Go
 #1: Concurrency
-15:04 24 Jul 2015
+15:04 12 Aug 2015
 Tags: workshop
 
 Kenji Pa
@@ -116,7 +116,7 @@ We can also use the `range` operator on a channel to extract its value. Here is 
 
 Let's consider a `workSlowly` function which "works" every 3 seconds:
 
-	func work(name string) chan string {
+	func workSlowly(name string) chan string {
 		ch := make(chan string)
 	
 		go func() {
@@ -165,8 +165,8 @@ Select checks every channel in case to see if they are ready, and blocks until o
 If a default clause exists, select doesn't block and executes the default block.
 
   select {
-    case v1 := ch1:
-      fmt.Printf("received %v from ch1")
+    case v1 := <-ch1:
+      fmt.Printf("received %v from ch1", v1)
     case ch2 <- 9001:
       fmt.Printf("sent 9001 to ch2")
     default:
