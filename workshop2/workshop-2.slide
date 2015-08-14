@@ -9,13 +9,52 @@ limouren@gmail.com
 http://www.facebook.com/limouren
 @limouren
 
-* Goroutine (finally!)
+* Welcome back!
+
+Slides have been update. Do a
+
+  git pull
+
+Or access
+
+[[https://github.com/limouren/go-workshop]]
+
+for the latest slides.
+
+* What is Concurrency?
+
+Concurrency is a property of systems in which several computations are executing simultaneously, and potentially interacting with each other.
+
+[[https://en.wikipedia.org/wiki/Concurrency_(computer_science)]]
+
+* Why Concurrency?
+
+To better utilize modern multi-core / multi-processor computer architecture
+
+To better utilize resources (typically while doing IO)
+
+Becoz' Concurrency is cool!
+
+.image http://cdn.meme.am/images/100x100/1152667.jpg
+
+* Concurrency in Go
+
+- Goroutine (lightweight thread of execution)
+- Channel (mean of communication between goroutine)
+
+We will talk about them one by one.
 
 * Goroutine
 
 We will start with this simple program:
 
 .play simple.go
+
+How about some goroutines?
+
+* WHAT!?
+
+.image http://cdn.inquisitr.com/wp-content/uploads/2015/01/936full-saved-by-the-bell-screenshot-665x385.png
 
 * Goroutine (Cont.)
 
@@ -29,13 +68,14 @@ Let's wait a little bit to see what's happening:
 
 * So what is Goroutine?
 
-Goroutine is a function running independently of other Goroutine and main function.
+Goroutine is a function running independently of other goroutines.
 
-Goroutine is very cheap and have very little setup and shutdown cost. Free feel to spawn a new one when you need it. (China company Qihoo 360 runs million of goroutines on *single* machine[0])
+Goroutine is cheap.
 
-Goroutine is not thread. One thread can run own multiple Goroutines. Go runtime multiplex goroutines on threads so you don't even have to touch thread while coding.
+- It is totally fine for a program to have hundred or thousands goroutines running simultaneously.
+- Some managed to run million of goroutines on a *single* machine[0]
 
-*0: [[https://blog.golang.org/qihoo]]
+[0] [[https://blog.golang.org/qihoo]]
 
 * Working forever is cruel
 
@@ -43,7 +83,7 @@ Goroutine is not thread. One thread can run own multiple Goroutines. Go runtime 
 
 .play goroutine-load.go
 
-* Goroutine*s*
+* Goroutines
 
 .play goroutine-multi.go
 
@@ -57,30 +97,54 @@ Here comes _channels_.
 
 * Channel
 
-The mean of communication between Goroutine.
+The mean of communication between Goroutine. Here's how to declare it:
+
+  var variableName chan Type
+
+In most cases we declare and create a channel at the same time. Here is an example of creating a channel of `int`:
 
   ch := make(chan int)
 
-Use the left-arrow operator to send a value through channel. It blocks until value is received.
+* Channel (Cont.)
+
+Channel is _typed_. That means one can only send and receive one type of value thru channel. As I mentioned *send*:
 
   ch <- 1
 
-Receive from channel using right arrow. It blocks until we received a value.
+It sent an integer 1 into `ch`. Now to *receive* this value:
 
   i := <-ch
   // i == 1
 
+* Channel (Cont.)
+
+Channel synchonizes execution of goroutines:
+
+.play channel-sync.go
+
 * How to use channel
 
-Let's say, in the previous working example, we want the main function to be notified when work returns. Let's write it:
+Now come back to our `work` example. We want the main function to wait until `work` finished:
 
-.play goroutine-load.go /START OMIT/,/END OMIT/
+.play goroutine-wait.go /START OMIT/,/END OMIT/
 
 * How to use channel (Cont.)
 
-Channel is first-class value which can be passed around. Here is another version that actually modifies the signature of work:
+Function can also receive channel as parameter. Let's modify the signature of `work` to receive a channel:
 
-.play goroutine-load.go /START OMIT/,/END OMIT/
+  func work(name string, workload int, done chan bool)
+
+The idea is once `work` has finished its working, it will send a value to this done channel. In this way main doesn't send to the channel itself.
+
+Noticing that done that `work` only sends to this channel, we can declare the func signature like this:
+
+  func work(name string, workload int, done chan<- bool)
+
+`chan<-`bool` represents a send-only channel of bool. As you might have guessed, a receive-only channel is `<-chan`bool`.
+
+* How to use channel (Cont.)
+
+.play channel-func-param.go /START OMIT/,/END OMIT/
 
 * Generator
 
@@ -131,7 +195,9 @@ Let's consider a `workSlowly` function which "works" every 3 seconds:
 
 * Exercise #1: Fan in (Cont.)
 
-If we intend to receive 10 works from fast worker (Edwin) and slow worker (Kenji) sequentially like this:
+We need 10 works get done.
+
+If we are to receive 10 works from fast worker (Edwin) and slow worker (Kenji) sequentially like this:
 
   edwin := work("edwin")
   kenji := workSlowly("kenji")
@@ -145,7 +211,7 @@ It would take more time than needed since Edwin has to wait for Kenji turn befor
 
 * Exercise #1: Fan in (Cont.)
 
-Now, implement a `fanIn` function that takes two `chan`string` and return a channel, which would consumes and returns a work whenever one of the two workers is ready to deliver:
+Now, implement a `fanIn` function that would solve this problem. It takes two `chan`string` and return a channel, which would then consumes and returns a work whenever one of the two workers is ready to deliver:
 
   anyWork := fanIn(work("edwin"), workSlowly("kenji"))
   for i := 0; i < 10; i++ {
@@ -156,13 +222,30 @@ Base code is provided at _exec-fanin.go_
 
 * Select
 
-Select is flow control (?) & synchronization structure of channels.
+Select is a synchronization structure on multiple channels.
 
 It is like `switch`, but works on channels, instead of value.
 
-Select checks every channel in case to see if they are ready, and blocks until one of them is ready.
+It comes with two favours.
 
 If a default clause exists, select doesn't block and executes the default block.
+
+* Select: Blocking
+
+Select checks every channel in case to see if they are ready, and blocks until one of them is ready.
+
+  select {
+    case v1 := <-ch1:
+      fmt.Printf("received %v from ch1", v1)
+    case ch2 <- 9001:
+      fmt.Printf("sent 9001 to ch2")
+  }
+
+If two channels is ready, `select` will choose one randomly.
+
+* Select: Non-blocking
+
+`select` can have a `default` case. If default case presents and all channel case blocks, `select` will not wait, but execute the default clause immediately:
 
   select {
     case v1 := <-ch1:
@@ -194,7 +277,7 @@ Let's re-visit the fan-in function:
 		return ch
 	}
 
-We can rewrite it using select and save an goroutine. Try it yourself!
+We can rewrite it using select and save an goroutine. Exercise Time!
 
 * Select: Fan-in (Ans.)
 
@@ -217,4 +300,19 @@ We can rewrite it using select and save an goroutine. Try it yourself!
 
 * Select: Time-up
 
+`time.After(n)` returns a channel that will be ready after n ms
+
 .play timeup.go /START OMIT/,/END OMIT/
+
+* Experiment More
+
+Combination of goroutine and channel has countless possibilities. Think and Experiment!
+
+Some examples:
+- [[https://golang.org/doc/effective_go.html#leaky_buffer][Leaky Buffer]]
+- [[https://github.com/golang/go/wiki/RateLimiting][Rate Limit]]
+- [[https://talks.golang.org/2012/waza.slide#45]Load Balancer]
+
+* Final Execise:
+
+See _ex-image-downloader.go_

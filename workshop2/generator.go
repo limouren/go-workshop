@@ -15,6 +15,7 @@ func work(name string, workload int) chan string {
 			ch <- fmt.Sprint(name, i)
 			time.Sleep(1 * time.Second)
 		}
+		close(ch)
 	}()
 
 	return ch

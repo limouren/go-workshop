@@ -10,14 +10,12 @@ import (
 
 func work(name string) chan string {
 	ch := make(chan string)
-
 	go func() {
 		for i := 0; ; i++ {
 			ch <- fmt.Sprint(name, i)
 			time.Sleep(time.Duration(rand.Int63n(10)) * time.Second)
 		}
 	}()
-
 	return ch
 }
 
