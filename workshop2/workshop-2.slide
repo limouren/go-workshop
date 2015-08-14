@@ -304,6 +304,21 @@ We can rewrite it using select and save an goroutine. Exercise Time!
 
 .play timeup.go /START OMIT/,/END OMIT/
 
+* Buffered Channel
+
+Buffered channel is like channel, but `make`d with a capacity of buffer:
+
+  ch := make(chan int, 1)
+
+It initialized a buffered channel with capacity of 1.
+
+The main difference between buffered channel and unbuffered channel is that: Sending to buffered channel doesn't block immediately. It only blocks until the buffer has been filled.
+
+I am not going to talk more about it. Interested ones can seek the following:
+
+- [[https://tour.golang.org/concurrency/3]]
+- [[https://golang.org/doc/effective_go.html#channels]]
+
 * Experiment More
 
 Combination of goroutine and channel has countless possibilities. Think and Experiment!
