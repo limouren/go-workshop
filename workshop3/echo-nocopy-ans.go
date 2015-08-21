@@ -10,12 +10,14 @@ import (
 // EchoServer echoes the data received on the WebSocket.
 func EchoServer(ws *websocket.Conn) {
 	var message string
-	if err := websocket.Message.Receive(ws, &message); err != nil {
-		log.Printf("receive: %v", err)
-	}
+	for {
+		if err := websocket.Message.Receive(ws, &message); err != nil {
+			log.Printf("receive: %v", err)
+		}
 
-	if err := websocket.Message.Send(ws, message); err != nil {
-		log.Printf("send: %v", err)
+		if err := websocket.Message.Send(ws, message); err != nil {
+			log.Printf("send: %v", err)
+		}
 	}
 }
 

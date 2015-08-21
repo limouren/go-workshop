@@ -12,12 +12,14 @@ var websockets = []*websocket.Conn{}
 // ChatServer implements a websocket-based chatroom
 func ChatServer(ws *websocket.Conn) {
 	var message string
-	if err := websocket.Message.Receive(ws, &message); err != nil {
-		log.Printf("receive: %v", err)
-	}
+	for {
+		if err := websocket.Message.Receive(ws, &message); err != nil {
+			log.Printf("receive: %v", err)
+		}
 
-	if err := websocket.Message.Send(ws, message); err != nil {
-		log.Printf("send: %v", err)
+		if err := websocket.Message.Send(ws, message); err != nil {
+			log.Printf("send: %v", err)
+		}
 	}
 }
 
