@@ -1,0 +1,205 @@
+Workshop: Introduction To Go
+#3: Let's write the chat server!
+15:04 12 Aug 2015
+Tags: workshop
+
+Kenji Pa
+Cat Developer, Oursky
+limouren@gmail.com
+http://www.facebook.com/limouren
+@limouren
+
+* Welcome back!
+
+Slides have been update. Do a
+
+  git pull
+
+Or access
+
+[[https://github.com/limouren/go-workshop]]
+
+for the latest slides.
+
+* Chat Server!
+
+* Lay the things out
+
+1. We are writing a web chat server
+2. It uses websocket
+
+_Websocket_?
+
+* HTTP & Websocket
+
+Let pretend there is only HTTP.
+
+HTTP: Uni-direction, Req-Rep style, good old way
+
+How to write a chat server in HTTP?
+
+Whiteboard time!
+
+* HTTP & Websocket
+
+HTTP lacks a way for server to initiate a conversation. The server needs to
+*push* updates to clients.
+
+Fear not, it's now 2015 and we have Websocket.
+
+* Websocket
+
+What is Websocket?
+
+	WebSocket is a protocol providing full-duplex communication channels over a single TCP connection.
+
+[*] [[https://en.wikipedia.org/wiki/WebSocket]]
+
+* Websocket (Cont.)
+
+.image http://cdn.meme.am/images/1259583.jpg
+
+What is it up'ing?
+
+* Websocket (Cont.)
+
+Websocket is designed to be understood by HTTP server to establish a persistent connection with Client.
+
+It works by allowing HTTP server to upgrade (aka. _steal_) the underlying TCP connection of a HTTP request.
+
+* Let's write the server!
+
+* Finally!
+
+.image http://cdn.meme.am/images/2607593.jpg
+
+* HTTP: Hello World
+
+.code http.go
+
+* Websocket: Echo server
+
+  go get golang.org/x/net/websocket
+
+.code echo.go /START/,/END/
+
+* Websocket: Echo server (Cont.)
+
+.image http://i2.kym-cdn.com/entries/icons/original/000/000/063/Picture_2_c.jpg
+
+* Websocket: Echo Server (Cont.)
+
+.code echo-nocors.go /START/,/END/
+
+* Websocket (Cont.)
+
+It is nearly _magic._ Though we obviously need more control on sending & receiving messages.
+
+The basic flow of the chat server:
+
+1. When a participant join a chatroom, add it to the list of participants
+2. When a participant send a message, forward it to all participants
+3. When a participant leave the room, remove it from the list of participants
+
+* Websocket (Cont.)
+
+We needs these knowledges form the API:
+
+1. *When*a*participant*join*a*chatroom*, add it to the list of participants
+2. *When*a*participant*send*a*message*, forward it to all participants
+3. *When*a*participant*leave*the*room*, remove it from the list of participants
+
+* Websocket: Echo again
+
+Let's forget `io.Copy` and rewrite the echo server by hand so that we can determine the those points.
+
+You probably want to start by writing a Hello World. Then move onto implementating the actual echo server.
+
+File: echo-nocopy.go
+
+_Hint:_ You might want to look at `websocket.Codec` and `websocket.Message`.
+
+* Websocket: Echo again (Cont.)
+
+If your code looks like this:
+
+	var message string
+	websocket.Message.Receive(ws, &message)
+	websocket.Message.Send(ws, message)
+
+You are doing it wrong.
+
+* Errors
+
+Go doesn't have exception. Instead, it uses error to signal a handleable failure within a function. It is clear from the func delcaration that it might possibly fail:
+
+	func (cd Codec) Receive(ws *Conn, v interface{}) (err error)
+
+`error` is an interface declared as:
+
+	type error interface {
+	    Error() string
+	}
+
+Go intentionally forces programmers to think about error handling. You either handle it or explicitly ignore with comments.
+
+Further readings:
+[[http://blog.golang.org/error-handling-and-go]]
+[[http://blog.golang.org/defer-panic-and-recover]]
+
+* interface{}
+
+Q: What is that `interface{}` type in `(*Conn).Receive`?
+A: HMM...
+
+`interface{}` is an empty interface with no methods, which can be assigned any values.
+
+ i, s = 1, "=w="
+ var intf interface{}
+ intf = i	// Okay!
+ intf = s	// Okay too!
+
+It is typically needed when you are writing functions that work with arbitrary types. Avoid it when you can.
+
+Read more:
+[[http://blog.golang.org/laws-of-reflection]]
+
+* Websocket
+
+Now back to our chat server.
+
+* Websocket
+
+The echo server is probably good enough for Yuen:
+
+.image http://i.imgur.com/C6xAx.jpg
+
+* Websocket
+
+but for extremely socialable university students... NO FOR SURE!
+
+.image http://c10.ilbe.com/files/attach/new/20140312/377678/418196430/3137641920/e0155e6714b7c7c175dc79cfa9ef6668.jpg
+
+* Chatroom
+
+The basic flow of the chat server:
+
+1. When a participant join a chatroom, add it to the *list of participants*
+2. When a participant send a message, forward it to *all*participants*
+3. When a participant leave the room, remove it from the *list*of*participants*
+
+So obviously we need to maintain a list of participants!
+
+* Chatroom (Cont.)
+
+Now enhance our echo server s.t. it becomes a chatroom:
+
+File: chatroom.go
+
+* Done for today!
+
+.image http://cdn.meme.am/instances/400x/54228852.jpg
+
+* Exercise
+
+Yay we have written the server but it does suffer from concurrency problem, i.e. if there are mulitple clients accessing our url at the same time, the program will dis-behave. Find the fix them!
