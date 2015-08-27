@@ -1,0 +1,125 @@
+Workshop: Introduction To Go
+#4: Let's write the chat server!
+15:04 12 Aug 2015
+Tags: workshop
+
+Kenji Pa
+Cat Developer, Oursky
+limouren@gmail.com
+http://www.facebook.com/limouren
+@limouren
+
+* Welcome back!
+
+Slides have been update. Do a
+
+  git pull
+
+Or access
+
+[[https://github.com/limouren/go-workshop]]
+
+for the latest slides.
+
+* Chatroom (Cont.)
+
+Anyone spotted the problem with the chatroom we wrote in last workshop?
+
+Answer:
+
+	func ChatServer(ws *websocket.Conn) {
+		websockets = append(websockets, ws)
+		// ...
+	}
+
+* Chatroom (Cont.)
+
+What? It looks fine!
+
+No it's not, when things run concurently.
+
+* Chatroom (Cont.)
+
+The line
+
+	websockets = append(websockets, ws)
+
+is essentially same as
+
+	tmp := append(websockets, ws)
+	websockets = tmp
+
+Note that `websockets` is a global variable shared by multiple goroutines. 
+
+* Chatroom (Cont.)
+
+Now consider two goroutines _R1_ and _R2_ running this statement concurrently.
+
+They might run like this (`ws` and `tmp` numbered for illustration purpose):
+
+	R1: tmp1 := append(websockets, ws1)	// tmp1 == [ws1]
+	R1: websockets = tmp1				// websockets == [ws1]
+	R2: tmp2 := append(websockets, ws2)	// tmp2 == [ws1, ws2]
+	R2: websockets = tmp2				// websockets == [ws1, ws2]; Perfectly fine
+
+It works!
+
+Now how about they run like this:
+
+	R1: tmp1 := append(websockets, ws1)	// tmp1 == [ws1]
+	R2: tmp2 := append(websockets, ws2)	// tmp2 == [ws2]
+	R1: websockets = tmp1				// websockets == [ws1]
+	R2: websockets = tmp2				// websockets == [ws2]; Nooooooooooooo!
+
+* What the hell is it?
+
+.image http://themavesite.com/TMS-Pictures/Epic/Memes/JackieChan.png
+
+* Data race
+
+It's data race. Data race occurred when there are more than one goroutine concurrently accessing a variable and at least one of them is trying to write it.
+
+How to fix it? We need to coordinate access to such variable to make sure there is only one goroutine reading and writing to it at the same time.
+
+* Data race: Fix
+
+First we declare a mutex together with `websockets`:
+
+	var websockets = []*websocket.Conn{}
+	var websocketsMu = sync.Mutex{}
+
+`Mutex` is a special data type in Go acting as a guard to shared resource.
+
+The proerpty that makes mutex useful is that: a mutex can only be _acquired_ by one goroutine at any time. The paradigm is to make every goroutine to _acquire_ a mutex before accessing a shared resource, and _release_ it once the goroutine is done with the resource. In this way we make sure only one goroutine is accessing the resource in one time.
+
+Theory is long, code is pretty short though:
+
+	websocketsMu.Lock()	// no other goroutines pass!!
+	websockets = append(websockets, ws)
+	websocketsMu.Unlock() // release the lock s.t. other goroutines can acquire it
+
+* Data race (Cont.)
+
+Q: Man it is tricky! How could I spot it without any help?
+A: Yea it's tricky and very difficult to debug. Fear not, Go got you covered!
+
+* Race detector
+
+Go has a built-in race detector to help you on finding these data race.
+
+Try running your server like this:
+
+	go run -race chatroom.go
+
+Now open two tabs of the client... Surprise!
+
+Read More: [[http://golang.org/doc/articles/race_detector.html]]
+
+# * Chatroom enhanced
+# 
+# The current chatroom works, but is a bit primitive. We don't even know who is talking to who!
+# 
+# Client would need to tell server its name. Server remembers the name so that it can tell others who is sending message.
+# 
+# The simpliest way 
+
