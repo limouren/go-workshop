@@ -90,7 +90,7 @@ First we declare a mutex together with `websockets`:
 
 `Mutex` is a special data type in Go acting as a guard to shared resource.
 
-The proerpty that makes mutex useful is that: a mutex can only be _acquired_ by one goroutine at any time. The paradigm is to make every goroutine to _acquire_ a mutex before accessing a shared resource, and _release_ it once the goroutine is done with the resource. In this way we make sure only one goroutine is accessing the resource in one time.
+The property that makes mutex useful is that: a mutex can only be _acquired_ by one goroutine at any time. The paradigm is to make every goroutine to _acquire_ a mutex before accessing a shared resource, and _release_ it once the goroutine is done with the resource. In this way we make sure only one goroutine is accessing the resource in one time.
 
 Theory is long, code is pretty short though:
 
@@ -115,11 +115,168 @@ Now open two tabs of the client... Surprise!
 
 Read More: [[http://golang.org/doc/articles/race_detector.html]]
 
-# * Chatroom enhanced
-# 
-# The current chatroom works, but is a bit primitive. We don't even know who is talking to who!
-# 
-# Client would need to tell server its name. Server remembers the name so that it can tell others who is sending message.
-# 
-# The simpliest way 
+* Chatroom enhanced
 
+Before we going to do anything... The websocket handler we have written has grown a bit fat...
+
+Let's refactor!
+
+.image http://i.imgur.com/wEioQuZ.jpg
+
+* Hmm...
+
+What we will achieve today (hopefully): [[quiet-mesa-3015.herokuapp.com]]
+
+In courtesy of [[http://socket.io/demos/chat/][socket.io demo]]
+
+* Chatroom enhanced (Cont.)
+
+\...Well, cause time is limited, the refactor has been done :(
+
+See `chatroom.go`
+
+* Chatroom enhanced (Cont.)
+
+The chatroom we wrote has one flaw... PARTICIPANTS HAVE NO NAMES!
+
+The client should be able to tell us their name!
+
+And now we have another problem: How do we know client is sending a message or
+their name?
+
+* Telling us the name
+
+We have to design a protocol for client-server communication. Several options here, ordered by their flexibility:
+
+1. The first message sent by client is its name
+2. Use some formatting:
+
+	LOGI: Kenji
+	MSGE: Hi everyone, I am Kenji!
+
+3. Use even more formatting (aka. JSON):
+
+	{"event": "login", "data": "Kenji"}
+	{"event": "new message", "data": "Hi everyone, I am Kenji"}
+
+We will go option 3 :D
+
+* Go JSON
+
+Let's explore how Go handle JSON. We have been using `websocket.Message` codec to send plain text. `websocket` got a JSON codec as well. Let's look into its example:
+
+	import "websocket"
+
+	type T struct {
+		Msg string
+		Count int
+	}
+
+	// receive JSON type T
+	var data T
+	websocket.JSON.Receive(ws, &data)
+
+	// send JSON type T
+	websocket.JSON.Send(ws, data)
+
+Internally it uses the `encoding/json` package.
+
+* Go JSON (Cont.)
+
+Now let's trying sending some JSON to client to see how the package works. See `json.go`
+
+Some guidances:
+
+1. Run the server. Observe how the struct maps to the JSON.
+2. Rename `Message.Event` to `Message.event` (private member). Now how does the JSON look like?
+3. Now change the definition to the followings: How does the JSON look like now?
+
+	type Message struct {
+		Event string      `json:"event"`
+		Data  MessageData
+	}
+
+4. Can you modify the struct s.t. its JSON output would look like the following?
+
+	{"event":"some event","data":{"username":"some username","message":"Here is a message :D"}}
+
+* GO JSON (Cont.)
+
+Okay, now we know how to send JSON. What about receiving?
+
+It's easy :D
+
+	var message Message
+	websocket.JSON.Receive(&message)
+
+* Chatroom
+
+Here comes the time we actually implement the chat server!
+
+	cd chatroom
+
+You are going to implement `chat.go`, which is the chat server. Client is a javascript webpage which has been fully implemented.
+
+* Chatroom: Protocol
+
+There are 4 events which will be emitted by the client:
+
+`add`user`: Register itself as a participant of the chatroom
+
+	{"event": "add user", "data": "Kenji"}
+
+`new`message`: Send a message to other participants of the chatroom
+
+	{"event": "new message", "data": "Hi everyone, I am Kenji!"}
+
+`typing`: Signify that the user is typing
+
+	{"event": "typing"}
+
+`stop`typing`: Signify that the user has stopped typing
+
+	{"event": "stop typing"}
+
+The `typing` and `stop`typing` events are non-critical. Thus optional to implement.
+
+* Chatroom: Server flow
+
+On receiving a `add`user` event:
+
+1. Emit a `login` event with count of participants
+
+	`{"event": "login", "data": {"numUsers": 1}}`
+
+2. Broadcast a `user`joined` event with the username who has joined and count of participants
+
+	`{"event": "user joined", "data": {"username": "Kenji", "numUsers": 1}}`
+
+On receiving a `send`message` event:
+
+1. Emit a `new`message` event with username and message content
+
+	`{"event": "new message", "data": {"username": "Kenji", "message": "Hi everyone! I am a boy!"}}`
+
+* Chatroom: Server flow
+
+On receiving a `typing` event:
+
+1. Emit a `typing` event with username of the typing user:
+
+	`{"event": "typing", "data": {"username": "Kenji"}}`
+
+On receiving a `stop`typing` event:
+
+1. Emit a `stop`typing` event with username of the user who has stopped typing:
+
+	`{"event": "stop typing", "data": {"username": "Kenji"}}`
+
+* Chatroom: Server flow
+
+On user disconnected:
+
+1. Broadcast a `user`left` event with the user who is leaving and new count of participants
+
+	`{"event": "user left", "data": {"username": "Kenji", "numUsers": 0}}`
+
+* So Long :D

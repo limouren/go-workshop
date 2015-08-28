@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+
+<style>
+body {
+  font-size: 18pt;
+}
+</style>
+
+<input id="msginput" disabled placeholder="Your message here">
+
+<div id="msglist">
+</div>
+
+<script language="javascript" type="text/javascript">
+websocket = new WebSocket("ws://localhost:8080/ws");
+msginput = document.getElementById("msginput");
+
+websocket.onopen = function(e) {
+  msginput.disabled = false;
+  msginput.focus();
+  showMessage('Connected!')
+};
+
+websocket.onclose = function(e) {
+  msginput.disabled = true;
+  showMessage('Disconnected!')
+};
+
+function showMessage(msg_text) {
+  var msg = document.createElement("p");
+  msg.innerHTML = msg_text;
+  msg_list = document.getElementById("msglist");
+  msg_list.insertBefore(msg, msg_list.firstChild);
+}
+
+websocket.onmessage = function(e) {
+  showMessage(e.data);
+};
+
+websocket.onerror = function(e) {
+  alert(e);
+};
+
+msginput.onkeydown = function(e) {
+  if (e.keyCode == 13) {
+    websocket.send(msginput.value);
+    msginput.value = "";
+  }
+}
+ 
+</script>
