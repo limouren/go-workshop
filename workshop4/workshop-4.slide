@@ -253,7 +253,7 @@ On receiving a `add`user` event:
 
 On receiving a `send`message` event:
 
-1. Emit a `new`message` event with username and message content
+1. Broadcast a `new`message` event with username and message content
 
 	`{"event": "new message", "data": {"username": "Kenji", "message": "Hi everyone! I am a boy!"}}`
 
@@ -261,13 +261,13 @@ On receiving a `send`message` event:
 
 On receiving a `typing` event:
 
-1. Emit a `typing` event with username of the typing user:
+1. Broadcast a `typing` event with username of the typing user:
 
 	`{"event": "typing", "data": {"username": "Kenji"}}`
 
 On receiving a `stop`typing` event:
 
-1. Emit a `stop`typing` event with username of the user who has stopped typing:
+1. Broadcast a `stop`typing` event with username of the user who has stopped typing:
 
 	`{"event": "stop typing", "data": {"username": "Kenji"}}`
 
