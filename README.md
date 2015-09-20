@@ -14,7 +14,7 @@
 3. Now fire up git bash / cmd, type the following:
 
    ```shell
-   $ go verion
+   $ go version
    go version go1.4.2 windows/amd64
    ```
 
